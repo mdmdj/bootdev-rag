@@ -13,10 +13,17 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    # loading movie data
     movieDataFile = open("./data/movies.json", "r")
     movieDataJson = json.load(movieDataFile)
+    movieDataFile.close()
 
     #print(movieDataJson)
+
+    # loading stop words
+    stopWordsFile = open("./data/stopwords.txt", "r")
+    stopWords = stopWordsFile.read().splitlines()
+    stopWordsFile.close()
 
     match args.command:
       case "search":
@@ -36,12 +43,22 @@ def main() -> None:
           queryWords = query.split()
           print(f"{queryWords}")
 
+          # remove stop words from query
+          queryWords = [word for word in queryWords if word not in stopWords]
+          print(f"{queryWords}")
+
           results = []
 
           for movie in movieDataJson["movies"]:
               titleToMatch = movie["title"].lower().translate(str.maketrans('', '', string.punctuation))
               titleSplit = titleToMatch.split()
-              if any(word in titleSplit for word in queryWords):
+              # remove stop words from title
+              titleSplit = [word for word in titleSplit if word not in stopWords]
+              if any(
+                  q in t
+                  for q in queryWords
+                  for t in titleSplit
+              ):
                   results.append(movie)
 
           print(f"Found {len(results)} results")
