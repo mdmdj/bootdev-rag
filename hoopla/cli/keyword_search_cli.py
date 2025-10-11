@@ -3,6 +3,7 @@
 import argparse
 import json
 import string
+from nltk.stem import PorterStemmer
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -47,6 +48,11 @@ def main() -> None:
           queryWords = [word for word in queryWords if word not in stopWords]
           print(f"{queryWords}")
 
+          # filter query to stems
+          stemmer = PorterStemmer()
+          queryWords = [stemmer.stem(word) for word in queryWords]
+          print(f"{queryWords}")
+
           results = []
 
           for movie in movieDataJson["movies"]:
@@ -54,6 +60,8 @@ def main() -> None:
               titleSplit = titleToMatch.split()
               # remove stop words from title
               titleSplit = [word for word in titleSplit if word not in stopWords]
+              # fileter title to stems
+              titleSplit = [stemmer.stem(word) for word in titleSplit]
               if any(
                   q in t
                   for q in queryWords
