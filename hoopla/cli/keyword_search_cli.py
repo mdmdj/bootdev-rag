@@ -28,11 +28,20 @@ def main() -> None:
           query = query.translate(str.maketrans('', '', string.punctuation))
           print(f"{query}")
 
+          # lowercase query
+          query = query.lower()
+          print(f"{query}")
+
+          # split on whitespace
+          queryWords = query.split()
+          print(f"{queryWords}")
+
           results = []
 
           for movie in movieDataJson["movies"]:
               titleToMatch = movie["title"].lower().translate(str.maketrans('', '', string.punctuation))
-              if titleToMatch.find(query.lower()) != -1:
+              titleSplit = titleToMatch.split()
+              if any(word in titleSplit for word in queryWords):
                   results.append(movie)
 
           print(f"Found {len(results)} results")
