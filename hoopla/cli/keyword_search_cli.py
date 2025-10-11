@@ -2,7 +2,7 @@
 
 import argparse
 import json
-
+import string
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -20,12 +20,19 @@ def main() -> None:
 
     match args.command:
       case "search":
-          print(f"Searching for: {args.query}")
+          query = args.query
+
+          print(f"Searching for: {query}")
+
+          # remove string.punctuation from query
+          query = query.translate(str.maketrans('', '', string.punctuation))
+          print(f"{query}")
 
           results = []
 
           for movie in movieDataJson["movies"]:
-              if movie["title"].lower().find(args.query.lower()) != -1:
+              titleToMatch = movie["title"].lower().translate(str.maketrans('', '', string.punctuation))
+              if titleToMatch.find(query.lower()) != -1:
                   results.append(movie)
 
           print(f"Found {len(results)} results")
