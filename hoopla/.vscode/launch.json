@@ -21,6 +21,14 @@
       "args": ["search", "love"]
     },
     {
+      "name": "cli tf - test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["tf", "424","bear"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",

@@ -12,18 +12,28 @@ from .search_utils import CACHE_DIR, DEFAULT_SEARCH_LIMIT, load_movies, load_sto
 class InvertedIndex:
     def __init__(self) -> None:
         self.index = defaultdict(set)
-        self.docmap: dict[int, dict] = {}
+        self.docmap: dict[str, dict] = {}
         self.index_path = os.path.join(CACHE_DIR, "index.pkl")
         self.docmap_path = os.path.join(CACHE_DIR, "docmap.pkl")
-        self.term_frequencies_path = os.path
-        self.term_frequencies = dict[int, Counter]
+        self.term_frequencies_path = os.path.join(
+            CACHE_DIR, "term_frequencies.pkl")
+        self.term_frequencies: dict[str, Counter[str]] = {}
 
     # An __add_document(self, doc_id, text) method.
 
-    def __add_document(self, doc_id: int, text: str) -> None:
+    def __add_document(self, doc_id: str, text: str) -> None:
+        # initialize the term frequency counter for this docid
+        self.term_frequencies[doc_id] = Counter()
+
         tokens = tokenize_text(text)
+        # unique token set for index
         for token in set(tokens):
             self.index[token].add(doc_id)
+
+        # raw list of tokens for frequency
+        for token in tokens:
+            # increment the term frequency counter for this token in this docid
+            self.term_frequencies[doc_id][token] += 1
 
     # A get_documents(self, term) method. It should get the set of document IDs for a given token, and return them as a list, sorted in ascending order.
     def get_documents(self, term: str) -> list[int]:
@@ -35,7 +45,7 @@ class InvertedIndex:
         # When adding the movie data to the index with __add_document(), concatenate the title and the description (i.e., f"{m['title']} {m['description']}") and use that as the input text.
         movies = load_movies()
         for m in movies:
-            doc_id = m["id"]
+            doc_id = f"{m["id"]}"
             doc_description = f"{m['title']} {m['description']}"
             self.docmap[doc_id] = m
             self.__add_document(doc_id, doc_description)
@@ -53,6 +63,9 @@ class InvertedIndex:
         with open(self.docmap_path, "wb") as f:
             pickle.dump(self.docmap, f)
 
+        with open(self.term_frequencies_path, "wb") as f:
+            pickle.dump(self.term_frequencies, f)
+
     # Add a load() method to your InvertedIndex class. It should load the index and docmap from disk using the pickle module's load function.
     def load(self) -> None:
         # Use cache/index.pkl for the index
@@ -69,6 +82,30 @@ class InvertedIndex:
         # Use cache/docmap.pkl for the docmap
         with open(self.docmap_path, "rb") as f:
             self.docmap = pickle.load(f)
+
+        with open(self.term_frequencies_path, "rb") as f:
+            self.term_frequencies = pickle.load(f)
+
+    # Add a new get_tf(self, doc_id: str, term: str) -> int method.
+    def get_tf(self, doc_id: str, term: str) -> int:
+        # tokenize the term arg
+        # Be sure to tokenize the term, but assume that there is only one token.
+        # If there's more than one, raise an exception.
+        term_tokens = tokenize_text(term)
+        if len(term_tokens) != 1:
+            raise Exception("get_tf() expects a single token")
+        term_token = term_tokens[0]
+
+        # check if the term exists in the term frequencies for that docid
+        if doc_id not in self.term_frequencies:
+            return 0
+
+            # If the term doesn't exist in that document, return 0.
+        if term_token not in self.term_frequencies[doc_id]:
+            return 0
+
+            # It should return the times the token appears in the document with the given ID.
+        return self.term_frequencies[doc_id][term_token]
 
 
 def preprocess_text(text: str) -> str:
@@ -110,11 +147,17 @@ def search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
     for qt in query_tokens:
         queryResult = invertedIndex.get_documents(qt)
         for qr in queryResult:
-            results.append(invertedIndex.docmap[qr])
+            results.append(invertedIndex.docmap[str(qr)])
             if len(results) >= limit:
                 return results
 
     return results
+
+
+def tf_command(doc_id: str, term: str) -> int:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    return invertedIndex.get_tf(doc_id, term)
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:

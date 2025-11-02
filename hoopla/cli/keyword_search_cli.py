@@ -4,7 +4,7 @@ import argparse
 import json
 import string
 from nltk.stem import PorterStemmer
-from lib.keyword_search import build_command, search_command
+from lib.keyword_search import build_command, search_command, tf_command
 
 
 DEFAULT_SEARCH_LIMIT = 50
@@ -21,6 +21,10 @@ def main() -> None:
 
     build_parser = subparsers.add_parser("build", help="Build index")
 
+    tf_parser = subparsers.add_parser("tf", help="Get term frequency")
+    tf_parser.add_argument("doc_id", type=str, help="Document ID")
+    tf_parser.add_argument("term", type=str, help="Term")
+
     args = parser.parse_args()
 
     match args.command:
@@ -34,6 +38,11 @@ def main() -> None:
             results = search_command(args.query)
             for r in (results):
                 print(f"{r["id"]} {r["title"]}")
+
+        case "tf":
+            # It should take a document ID and a term as arguments.
+            print(
+                f"Term frequency for {args.doc_id} {args.term}: {tf_command(args.doc_id, args.term)}")
 
         case _:
             parser.exit(2, parser.format_help())
