@@ -29,6 +29,14 @@
       "args": ["tf", "424","bear"]
     },
     {
+      "name": "cli idf - test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["idf", "grizzly"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",

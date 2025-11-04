@@ -4,7 +4,7 @@ import argparse
 import json
 import string
 from nltk.stem import PorterStemmer
-from lib.keyword_search import build_command, search_command, tf_command
+from lib.keyword_search import build_command, search_command, tf_command, idf_command
 
 
 DEFAULT_SEARCH_LIMIT = 50
@@ -25,6 +25,10 @@ def main() -> None:
     tf_parser.add_argument("doc_id", type=str, help="Document ID")
     tf_parser.add_argument("term", type=str, help="Term")
 
+    idf_parser = subparsers.add_parser(
+        "idf", help="Get inverse document frequency")
+    idf_parser.add_argument("term", type=str, help="Term")
+
     args = parser.parse_args()
 
     match args.command:
@@ -43,6 +47,10 @@ def main() -> None:
             # It should take a document ID and a term as arguments.
             print(
                 f"Term frequency for {args.doc_id} {args.term}: {tf_command(args.doc_id, args.term)}")
+
+        case "idf":
+            idf = idf_command(args.term)
+            print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
 
         case _:
             parser.exit(2, parser.format_help())

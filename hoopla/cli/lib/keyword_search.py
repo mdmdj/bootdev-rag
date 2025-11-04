@@ -2,6 +2,7 @@
 import os
 import pickle
 import string
+import math
 from collections import defaultdict, Counter
 
 from nltk.stem import PorterStemmer
@@ -107,6 +108,21 @@ class InvertedIndex:
             # It should return the times the token appears in the document with the given ID.
         return self.term_frequencies[doc_id][term_token]
 
+    def get_idf(self, term: str) -> float:
+        term_tokens = tokenize_text(term)
+        if len(term_tokens) != 1:
+            raise Exception("get_idf() expects a single token")
+        term_token = term_tokens[0]
+
+        # get the number of documents in the index
+        doc_count = len(self.docmap)
+        # get the number of documents that contain the term
+        term_doc_count = len(self.index[term_token])
+
+        result = math.log((doc_count + 1) / (term_doc_count + 1))
+
+        return result
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -158,6 +174,12 @@ def tf_command(doc_id: str, term: str) -> int:
     invertedIndex = InvertedIndex()
     invertedIndex.load()
     return invertedIndex.get_tf(doc_id, term)
+
+
+def idf_command(term: str) -> float:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    return invertedIndex.get_idf(term)
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:
