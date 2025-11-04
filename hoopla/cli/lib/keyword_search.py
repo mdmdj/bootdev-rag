@@ -123,6 +123,11 @@ class InvertedIndex:
 
         return result
 
+    def get_tfidf(self, doc_id: str, term: str) -> float:
+        tf = self.get_tf(doc_id, term)
+        idf = self.get_idf(term)
+        return tf * idf
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -180,6 +185,12 @@ def idf_command(term: str) -> float:
     invertedIndex = InvertedIndex()
     invertedIndex.load()
     return invertedIndex.get_idf(term)
+
+
+def tfidf_command(doc_id: str, term: str) -> float:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    return invertedIndex.get_tfidf(doc_id, term)
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:
