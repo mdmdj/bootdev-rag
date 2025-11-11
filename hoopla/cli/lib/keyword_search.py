@@ -7,15 +7,17 @@ from collections import defaultdict, Counter
 
 from nltk.stem import PorterStemmer
 
-from .search_utils import CACHE_DIR, DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, BM25_K1
+from .search_utils import CACHE_DIR, DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, BM25_K1, BM25_B
 
 
 class InvertedIndex:
     def __init__(self) -> None:
         self.index = defaultdict(set)
         self.docmap: dict[str, dict] = {}
+        self.doc_lengths = {}
         self.index_path = os.path.join(CACHE_DIR, "index.pkl")
         self.docmap_path = os.path.join(CACHE_DIR, "docmap.pkl")
+        self.doc_lengths_path = os.path.join(CACHE_DIR, "doc_lengths.pkl")
         self.term_frequencies_path = os.path.join(
             CACHE_DIR, "term_frequencies.pkl")
         self.term_frequencies: dict[str, Counter[str]] = {}
@@ -35,6 +37,20 @@ class InvertedIndex:
         for token in tokens:
             # increment the term frequency counter for this token in this docid
             self.term_frequencies[doc_id][token] += 1
+
+        # save the length of the document in tokens
+        self.doc_lengths[doc_id] = len(tokens)
+
+    def __get_avg_doc_length(self) -> float:
+        # if there are no documents, return 0
+        if len(self.docmap) == 0:
+            return 0.0
+
+        # otherwise, return the average length of all documents
+        total_length = 0
+        for doc_id in self.docmap:
+            total_length += self.doc_lengths[doc_id]
+        return total_length / len(self.docmap)
 
     # A get_documents(self, term) method. It should get the set of document IDs for a given token, and return them as a list, sorted in ascending order.
     def get_documents(self, term: str) -> list[int]:
@@ -67,6 +83,10 @@ class InvertedIndex:
         with open(self.term_frequencies_path, "wb") as f:
             pickle.dump(self.term_frequencies, f)
 
+        # Save the doc_lengths
+        with open(self.doc_lengths_path, "wb") as f:
+            pickle.dump(self.doc_lengths, f)
+
     # Add a load() method to your InvertedIndex class. It should load the index and docmap from disk using the pickle module's load function.
     def load(self) -> None:
         # Use cache/index.pkl for the index
@@ -86,6 +106,10 @@ class InvertedIndex:
 
         with open(self.term_frequencies_path, "rb") as f:
             self.term_frequencies = pickle.load(f)
+
+        # load the doc_lengths
+        with open(self.doc_lengths_path, "rb") as f:
+            self.doc_lengths = pickle.load(f)
 
     # Add a new get_tf(self, doc_id: str, term: str) -> int method.
     def get_tf(self, doc_id: str, term: str) -> int:
@@ -144,10 +168,24 @@ class InvertedIndex:
 
         return IDF
 
-    def get_bm25_tf(self, doc_id, term, k1=BM25_K1) -> float:
+    def get_bm25_tf(self, doc_id, term, k1=BM25_K1, b=BM25_B) -> float:
+        # Get doc length
+        doc_length = self.doc_lengths[doc_id]
+
+        # Get average doc length
+        avg_doc_length = self.__get_avg_doc_length()
+
+        # Length normalization factor
+        length_norm = 1 - b + b * (doc_length / avg_doc_length)
+
+        # Get Term Frequency
         tf = self.get_tf(doc_id, term)
-        sat = (tf * (k1 + 1)) / (tf + k1)
-        return sat
+
+        # Apply length normalization to term frequency
+        tf_component = (tf * (k1 + 1)) / (tf + k1 * length_norm)
+
+        # sat = (tf * (k1 + 1)) / (tf + k1)
+        return tf_component
 
 
 def preprocess_text(text: str) -> str:
