@@ -4,7 +4,7 @@ import argparse
 import json
 import string
 from nltk.stem import PorterStemmer
-from lib.keyword_search import build_command, search_command, tf_command, idf_command, tfidf_command
+from lib.keyword_search import build_command, search_command, tf_command, idf_command, tfidf_command, bm25idf_command
 
 
 DEFAULT_SEARCH_LIMIT = 50
@@ -34,6 +34,12 @@ def main() -> None:
     tfidf_parser.add_argument("doc_id", type=str, help="Document ID")
     tfidf_parser.add_argument("term", type=str, help="Term")
 
+    bm25_idf_parser = subparsers.add_parser(
+        'bm25idf', help="Get BM25 IDF score for a given term"
+    )
+    bm25_idf_parser.add_argument(
+        "term", type=str, help="Term to get BM25 IDF score for")
+
     args = parser.parse_args()
 
     match args.command:
@@ -61,6 +67,10 @@ def main() -> None:
             tfidf = tfidf_command(args.doc_id, args.term)
             print(
                 f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tfidf:.2f}")
+
+        case "bm25idf":
+            bm25idf = bm25idf_command(args.term)
+            print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
 
         case _:
             parser.exit(2, parser.format_help())

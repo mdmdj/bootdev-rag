@@ -128,6 +128,22 @@ class InvertedIndex:
         idf = self.get_idf(term)
         return tf * idf
 
+    def get_bm25_idf(self, term: str) -> float:
+        term_tokens = tokenize_text(term)
+        if len(term_tokens) != 1:
+            raise Exception("get_bm25_idf() expects a single token")
+        term_token = term_tokens[0]
+
+        # Get total number of documents in the index (N)
+        doc_count = len(self.docmap)
+        # Get total number of documents that contain the term (df)
+        term_doc_count = len(self.index[term_token])
+
+        IDF = math.log((doc_count - term_doc_count + 0.5) /
+                       (term_doc_count + 0.5) + 1)
+
+        return IDF
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -191,6 +207,12 @@ def tfidf_command(doc_id: str, term: str) -> float:
     invertedIndex = InvertedIndex()
     invertedIndex.load()
     return invertedIndex.get_tfidf(doc_id, term)
+
+
+def bm25idf_command(term: str) -> float:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    return invertedIndex.get_bm25_idf(term)
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:
