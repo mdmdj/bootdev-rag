@@ -37,6 +37,14 @@
       "args": ["idf", "grizzly"]
     },
     {
+      "name": "cli bm25tf - test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["bm25tf", "1", "anbuselvan"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",

@@ -4,8 +4,10 @@ import argparse
 import json
 import string
 from nltk.stem import PorterStemmer
-from lib.keyword_search import build_command, search_command, tf_command, idf_command, tfidf_command, bm25idf_command
-
+from lib.keyword_search import build_command, search_command, \
+    tf_command, idf_command, tfidf_command, \
+    bm25idf_command, bm25_tf_command
+from lib.search_utils import BM25_K1
 
 DEFAULT_SEARCH_LIMIT = 50
 
@@ -40,6 +42,15 @@ def main() -> None:
     bm25_idf_parser.add_argument(
         "term", type=str, help="Term to get BM25 IDF score for")
 
+    bm25_tf_parser = subparsers.add_parser(
+        "bm25tf", help="Get BM25 TF score for a given document ID and term"
+    )
+    bm25_tf_parser.add_argument("doc_id", type=str, help="Document ID")
+    bm25_tf_parser.add_argument(
+        "term", type=str, help="Term to get BM25 TF score for")
+    bm25_tf_parser.add_argument(
+        "k1", type=float, nargs='?', default=BM25_K1, help="Tunable BM25 K1 parameter")
+
     args = parser.parse_args()
 
     match args.command:
@@ -71,6 +82,11 @@ def main() -> None:
         case "bm25idf":
             bm25idf = bm25idf_command(args.term)
             print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
+
+        case "bm25tf":
+            bm25tf = bm25_tf_command(args.doc_id, args.term, args.k1)
+            print(
+                f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25tf:.2f}")
 
         case _:
             parser.exit(2, parser.format_help())

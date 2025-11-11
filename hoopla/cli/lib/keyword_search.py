@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 
 from nltk.stem import PorterStemmer
 
-from .search_utils import CACHE_DIR, DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords
+from .search_utils import CACHE_DIR, DEFAULT_SEARCH_LIMIT, load_movies, load_stopwords, BM25_K1
 
 
 class InvertedIndex:
@@ -144,6 +144,11 @@ class InvertedIndex:
 
         return IDF
 
+    def get_bm25_tf(self, doc_id, term, k1=BM25_K1) -> float:
+        tf = self.get_tf(doc_id, term)
+        sat = (tf * (k1 + 1)) / (tf + k1)
+        return sat
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -213,6 +218,12 @@ def bm25idf_command(term: str) -> float:
     invertedIndex = InvertedIndex()
     invertedIndex.load()
     return invertedIndex.get_bm25_idf(term)
+
+
+def bm25_tf_command(doc_id: str, term: str, k1: float = BM25_K1) -> float:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    return invertedIndex.get_bm25_tf(doc_id, term, k1)
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:
