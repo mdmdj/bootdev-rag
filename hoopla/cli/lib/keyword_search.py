@@ -1,4 +1,5 @@
 
+import itertools
 import os
 import pickle
 import string
@@ -56,6 +57,10 @@ class InvertedIndex:
     def get_documents(self, term: str) -> list[int]:
         doc_ids = self.index.get(term, set())
         return sorted(list(doc_ids))
+
+    # Get Document Title by ID
+    def get_doc_title(self, doc_id: str) -> str:
+        return self.docmap[doc_id]["title"]
 
     def build(self) -> None:
         # iterate over all the movies and add them to both the index and the docmap.
@@ -187,6 +192,45 @@ class InvertedIndex:
         # sat = (tf * (k1 + 1)) / (tf + k1)
         return tf_component
 
+    def bm25(self, doc_id, term) -> float:
+        term_tokens = tokenize_text(term)
+        if len(term_tokens) != 1:
+            raise Exception("bm() expects a single token")
+        term_token = term_tokens[0]
+
+        tf = self.get_bm25_tf(doc_id, term_token)
+        idf = self.get_bm25_idf(term_token)
+
+        return tf * idf
+
+    def bm25_search(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[tuple[str, float, str]]:
+        query_tokens = tokenize_text(query)
+
+        scores: dict[str, float] = {}
+
+        for doc_id in self.docmap:
+            doc_score: float = 0.0
+            for token in query_tokens:
+                token_score = self.bm25(doc_id, token)
+                doc_score += token_score
+
+            scores[doc_id] = doc_score
+
+        # sort the scores dict[str, float] in descending order of values
+        sorted_scores = dict(
+            sorted(scores.items(), key=lambda item: item[1], reverse=True))
+
+        # slice the top 5 scores
+        top_scores = dict(itertools.islice(sorted_scores.items(), limit))
+
+        results = list()
+        for score in top_scores.items():
+            doc_id = score[0]
+            doc_title = self.get_doc_title(doc_id)
+            results.append((doc_id, score[1], doc_title))
+
+        return results
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -262,6 +306,14 @@ def bm25_tf_command(doc_id: str, term: str, k1: float = BM25_K1) -> float:
     invertedIndex = InvertedIndex()
     invertedIndex.load()
     return invertedIndex.get_bm25_tf(doc_id, term, k1)
+
+
+def bm25_search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[tuple[str, float, str]]:
+    invertedIndex = InvertedIndex()
+    invertedIndex.load()
+    search_results = invertedIndex.bm25_search(query, limit)
+
+    return search_results
 
 
 def has_matching_token(query_tokens: list[str], title_tokens: list[str]) -> bool:

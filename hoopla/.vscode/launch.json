@@ -45,6 +45,14 @@
       "args": ["bm25tf", "1", "anbuselvan"]
     },
     {
+      "name": "cli bm25 search - test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/keyword_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["bm25search", "space adventure"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",
