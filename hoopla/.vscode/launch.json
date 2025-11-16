@@ -53,6 +53,14 @@
       "args": ["bm25search", "space adventure"]
     },
     {
+      "name": "cli verify_embeddings",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/semantic_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["verify_embeddings"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",
