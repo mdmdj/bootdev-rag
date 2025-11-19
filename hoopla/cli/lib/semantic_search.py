@@ -60,6 +60,35 @@ class SemanticSearch:
 
         return self.embeddings
 
+    def search(self, query, limit):
+        if self.embeddings is None or self.documents is None:
+            raise ValueError(
+                "No embeddings loaded. Call `load_or_create_embeddings` first.")
+        query_embedding = self.generate_embeddings(query)
+
+        cosine_similarity_list = []
+        for i, doc in enumerate(self.documents):
+            doc_embedding = self.embeddings[i]
+            cs = cosine_similarity(query_embedding, doc_embedding)
+            cosine_similarity_list.append((cs, doc))
+
+        # sort the list of tuples by cosine similarity in descending order
+        sorted_cosine_similarity_list = sorted(
+            cosine_similarity_list, key=lambda x: x[0], reverse=True)
+
+        # slice the top {limit} results
+        top_results = sorted_cosine_similarity_list[:limit]
+
+        # build a list of results containing the score, title and description
+        results = []
+        for score, doc in top_results:
+            results.append({
+                'score': score,
+                'title': doc['title'],
+                'description': doc['description']
+            })
+        return results
+
 
 def verify_model() -> None:
     ss = SemanticSearch()
@@ -79,6 +108,35 @@ def verify_embeddings() -> None:
     ss = SemanticSearch()
     movies = load_movies()
     ss.load_or_create_embeddings(movies)
+    # stop linting errors
+    if ss.documents is None or ss.embeddings is None:
+        print("No documents loaded")
+        return
     print(f"Number of docs:   {len(ss.documents)}")
     print(
         f"Embeddings shape: {ss.embeddings.shape[0]} vectors in {ss.embeddings.shape[1]} dimensions")
+
+
+def embed_query_text(query):
+    ss = SemanticSearch()
+    embedding = ss.generate_embeddings(query)
+    print(f"Query: {query}")
+    print(f"First 5 dimensions: {embedding[:5]}")
+    print(f"Shape: {embedding.shape}")
+
+
+def cosine_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+
+    return dot_product / (norm1 * norm2)
+
+
+def do_search(query, limit=5):
+    ss = SemanticSearch()
+    ss.load_or_create_embeddings(load_movies())
+    return ss.search(query, limit)

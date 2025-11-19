@@ -61,6 +61,14 @@
       "args": ["verify_embeddings"]
     },
     {
+      "name": "cli search",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/semantic_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["search", "funny bear movies", "--limit", "5"]
+    },
+    {
       "name": "cli build",
       "type": "debugpy",
       "request": "launch",
