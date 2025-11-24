@@ -13,6 +13,14 @@
       "args": ["search", "great"]
     },
     {
+      "name": "cli search_chunked - test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/semantic_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["search_chunked", "superhero action movie", "--limit", "25"]
+    },
+    {
       "name": "cli search - test",
       "type": "debugpy",
       "request": "launch",
@@ -67,6 +75,14 @@
       "program": "${workspaceFolder}/cli/semantic_search_cli.py",
       "cwd": "${workspaceFolder}",
       "args": ["search", "funny bear movies", "--limit", "5"]
+    },
+    {
+      "name": "cli chunk",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/semantic_search_cli.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["chunk", "This is a test text with more than ten words to see how chunking works", "--chunk-size", "5"]
     },
     {
       "name": "cli build",
